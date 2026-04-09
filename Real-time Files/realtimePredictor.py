@@ -4,14 +4,9 @@ import imutils
 import numpy as np
 from sklearn.metrics import pairwise
 import time
-from keras.datasets import mnist
-from keras.models import Sequential
-from keras.models import model_from_json
-from keras.models import load_model
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.utils import np_utils
+from tensorflow.keras.models import load_model
 import glob
+from pathlib import Path
 
 global loadedModel
 size = 300
@@ -22,16 +17,16 @@ def predict_pothole(currentFrame):
     currentFrame = cv2.resize(currentFrame,(size,size))
     currentFrame = currentFrame.reshape(1,size,size,1).astype('float')
     currentFrame = currentFrame/255
-    prob = loadedModel.predict_proba(currentFrame)
+    prob = loadedModel.predict(currentFrame, verbose=0)
     max_prob = max(prob[0])
     if(max_prob>.90):
-        return loadedModel.predict_classes(currentFrame) , max_prob
+        return int(np.argmax(prob, axis=1)[0]) , max_prob
     return "none",0
 
 # main function
 if __name__ == '__main__':
 
-    loadedModel = load_model('E:/Major 8sem/Model Files/full_model.h5')
+    loadedModel = load_model(Path(__file__).resolve().parent / 'full_model.h5', compile=False)
 
     camera = cv2.VideoCapture(0)
 
