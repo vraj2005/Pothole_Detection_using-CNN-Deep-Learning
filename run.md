@@ -1,195 +1,163 @@
-# Pothole Detection Project - Start to End Run Guide
+# Pothole Detection - Backend Run Guide
 
-This guide explains the full project flow in simple steps so a new person can train and run it from scratch.
+This guide matches the new backend structure and explains full start-to-end usage.
 
-## 1) What this project contains
-
-### Root branch (original flow)
-- `main.py`: trains TensorFlow/Keras model at 100x100 and saves `sample.h5`.
-- `Predictor.py`: loads `sample.h5`, runs test-set prediction.
-- `sample.h5`: root trained model (if already available).
-- `My Dataset/`: train/test images in `Pothole` and `Plain` classes.
-
-### Real-time Files branch (improved TensorFlow flow)
-- `Real-time Files/main.py`: trains improved TensorFlow/Keras model at 300x300.
-- `Real-time Files/Predictor.py`: batch test prediction using improved model.
-- `Real-time Files/realtimePredictor.py`: webcam inference with key controls.
-- `Real-time Files/full_model.h5`: improved pre-trained model.
-
-### Practical GPU training path added for your machine
-- `train_gpu_pytorch.py`: PyTorch CUDA trainer (works on this Windows + RTX setup).
-- `pytorch_pothole_gpu_model.pth`: best PyTorch checkpoint produced by training.
-
-## 2) Dataset structure (must be exact)
-
-Keep this folder structure exactly:
+## 1) New project structure
 
 ```text
-My Dataset/
-  train/
-    Pothole/
-    Plain/
-  test/
-    Pothole/
-    Plain/
+backend/
+  my_dataset/
+    train/
+      Pothole/
+      Plain/
+    test/
+      Pothole/
+      Plain/
+  tensorflow/
+    legacy/
+      main.py
+      Predictor.py
+      sample.h5
+    realtime/
+      main.py
+      Predictor.py
+      realtimePredictor.py
+      full_model.h5
+  pytorch/
+    train_gpu_pytorch.py
+    pytorch_realtime_video_predictor.py
+    pytorch_pothole_gpu_model.pth
 ```
 
+## 2) Dataset rules
+
+Use this exact layout inside `backend/my_dataset`.
+
 Rules:
-- Put pothole images only in `Pothole` folders.
-- Put non-pothole road images in `Plain` folders.
-- Use `.jpg`, `.jpeg`, or `.png`.
+- pothole images go in `Pothole`
+- normal road images go in `Plain`
+- supported formats: `.jpg`, `.jpeg`, `.png`
 
-## 3) Environment setup from scratch (Windows)
+## 3) Environment setup (from scratch)
 
-Open terminal in project root and run:
+Run from project root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-```
-
-Install base packages:
-
-```powershell
 pip install numpy opencv-python scikit-learn imutils
 ```
 
-## 4) Choose your training path
-
-You have 2 valid paths.
-
-### Path A: Original TensorFlow training (`main.py`)
-
-Use this if your friend wants to train exactly the original architecture and produce `sample.h5`.
-
-Install TensorFlow/Keras:
+Install TensorFlow only if you want TensorFlow scripts:
 
 ```powershell
 pip install tensorflow keras
 ```
 
-Run root training:
-
-```powershell
-python main.py
-```
-
-Optional epochs override:
-
-```powershell
-$env:EPOCHS='100'
-python main.py
-```
-
-Expected outputs:
-- `sample.h5`
-- `truesample.json`
-- `truesample.weights.h5`
-
-Important note:
-- In this codebase, `main.py` requires a TensorFlow-visible GPU and will raise an error if GPU is not visible.
-- On native Windows with modern TensorFlow, CUDA GPU is often not available.
-
-### Path B: GPU training that is confirmed working here (`train_gpu_pytorch.py`)
-
-Use this if your friend wants guaranteed GPU training on this machine style (RTX + Windows).
-
-Install CUDA PyTorch build:
+Install CUDA PyTorch for GPU path:
 
 ```powershell
 pip install --upgrade --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 ```
 
-Run training:
+## 4) Training options
+
+### A) TensorFlow legacy training (100x100)
 
 ```powershell
-python train_gpu_pytorch.py
+python backend/tensorflow/legacy/main.py
 ```
 
-Run longer training:
+Optional epochs:
 
 ```powershell
 $env:EPOCHS='100'
-python train_gpu_pytorch.py
+python backend/tensorflow/legacy/main.py
 ```
 
-Expected output:
-- `pytorch_pothole_gpu_model.pth` (best checkpoint)
+Outputs are saved in `backend/tensorflow/legacy`.
 
-## 5) Run predictions after training
-
-### Root TensorFlow prediction (uses `sample.h5`)
+### B) TensorFlow realtime training (300x300)
 
 ```powershell
-python Predictor.py
+python backend/tensorflow/realtime/main.py
 ```
 
-What it prints:
-- Predicted label per image (`1 = pothole`, `0 = plain`)
-- Final test accuracy
+Outputs are saved in `backend/tensorflow/realtime`.
 
-### Improved TensorFlow prediction (uses `Real-time Files/full_model.h5`)
+### C) PyTorch GPU training (recommended on your setup)
 
 ```powershell
-python "Real-time Files/Predictor.py"
+python backend/pytorch/train_gpu_pytorch.py
 ```
 
-## 6) Run real-time webcam pothole detection
+Optional longer run:
 
 ```powershell
-python "Real-time Files/realtimePredictor.py"
+$env:EPOCHS='100'
+python backend/pytorch/train_gpu_pytorch.py
 ```
 
-Controls:
-- Press `e` to show/hide prediction text overlay.
-- Press `q` to quit.
+Best model is saved as `backend/pytorch/pytorch_pothole_gpu_model.pth`.
 
-## 7) Full end-to-end sequence for a new friend
+## 5) Model checking (your 2 required ways)
 
-If someone receives this project and asks "what to run first", use this order:
+### A) Live mobile camera / webcam detection
 
-1. Create venv and install dependencies (Section 3).
-2. Verify dataset structure and class folders (Section 2).
-3. Pick one training path:
-   - Original TensorFlow (`python main.py`), or
-   - Working GPU PyTorch (`python train_gpu_pytorch.py`).
-4. Run batch prediction script to validate model behavior.
-5. Run real-time webcam predictor (TensorFlow branch).
+```powershell
+python backend/pytorch/pytorch_realtime_video_predictor.py --source webcam --camera-id 0 --device auto --threshold 0.85
+```
 
-## 8) Which file is used for what (quick memory)
+Notes:
+- try `--camera-id 1` or `--camera-id 2` for DroidCam/IP camera
+- press `q` to close
 
-- Want to train original root model: run `main.py`.
-- Want to test root model: run `Predictor.py`.
-- Want improved TensorFlow training/prediction: run scripts inside `Real-time Files/`.
-- Want reliable GPU training on this Windows setup: run `train_gpu_pytorch.py`.
+### B) Video file pothole detection
 
-## 9) Common errors and fixes
+```powershell
+python backend/pytorch/pytorch_realtime_video_predictor.py --source video --video-path "path\to\road_video.mp4" --output-path "outputs\road_video_pred.mp4" --device auto --threshold 0.85 --show
+```
 
-### Error: "No TensorFlow-visible GPU found"
-Cause:
-- TensorFlow cannot access CUDA GPU in this environment.
+You get:
+- live preview (`--show`)
+- saved output video in `outputs/`
+- console summary with processed frames and pothole events
 
-Fix options:
-- Use PyTorch path (`train_gpu_pytorch.py`) for local Windows GPU.
-- Or use WSL2/Linux TensorFlow GPU setup.
+## 6) TensorFlow prediction scripts
 
-### Error: "No readable images found"
-Cause:
-- Empty folder, wrong extension, or wrong directory path.
+Legacy model test:
 
-Fix:
-- Recheck `My Dataset/train/...` and `My Dataset/test/...` structure.
-- Ensure images are valid `.jpg/.jpeg/.png` files.
+```powershell
+python backend/tensorflow/legacy/Predictor.py
+```
 
-### Very unstable accuracy
-Cause:
-- Very small test set gives noisy metrics.
+Realtime-branch test:
 
-Fix:
-- Add more train/test images.
-- Keep class balance close between `Pothole` and `Plain`.
+```powershell
+python backend/tensorflow/realtime/Predictor.py
+```
 
-## 10) Interview-style one-line explanation
+TensorFlow webcam script:
 
-This project is a binary image-classification deep learning system that preprocesses road images (grayscale + resize), trains a CNN to classify `Pothole` vs `Plain`, evaluates on test images, and can perform live webcam inference in the real-time branch.
+```powershell
+python backend/tensorflow/realtime/realtimePredictor.py
+```
+
+## 7) Common errors
+
+Error: `No TensorFlow-visible GPU found`
+- TensorFlow GPU is not available in this environment
+- use the PyTorch path for local Windows GPU
+
+Error: `No images found` or `No readable images found`
+- check folder names and class names under `backend/my_dataset`
+- verify image formats and file integrity
+
+## 8) Best quick flow for your friend
+
+1. setup venv and packages
+2. put dataset in `backend/my_dataset`
+3. train with `python backend/pytorch/train_gpu_pytorch.py`
+4. run camera test with `python backend/pytorch/pytorch_realtime_video_predictor.py --source webcam --camera-id 0`
+5. run video test with `--source video --video-path ...`

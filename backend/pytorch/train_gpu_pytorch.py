@@ -141,7 +141,7 @@ def main():
     set_seed(SEED)
     device = require_gpu()
 
-    root = Path(__file__).resolve().parent / "My Dataset"
+    root = Path(__file__).resolve().parents[1] / "my_dataset"
     train_loader, test_loader, class_counts = make_loaders(root)
     print(f"Class counts after augmentation [plain, pothole]: {class_counts.tolist()}")
 

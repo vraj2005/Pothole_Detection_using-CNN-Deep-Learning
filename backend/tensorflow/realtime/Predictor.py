@@ -5,10 +5,10 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.utils import to_categorical
 
 
-size = 100
-root_dir = Path(__file__).resolve().parent
-dataset_dir = root_dir / "My Dataset" / "test"
-model_path = root_dir / "sample.h5"
+size = 300
+base_dir = Path(__file__).resolve().parent
+dataset_dir = Path(__file__).resolve().parents[2] / "my_dataset" / "test"
+model_path = base_dir / "full_model.h5"
 
 model = load_model(model_path, compile=False)
 
@@ -28,6 +28,8 @@ plain_images = load_images(dataset_dir / "Plain")
 pothole_images = load_images(dataset_dir / "Pothole")
 
 X_test = np.asarray([*pothole_images, *plain_images]).reshape(-1, size, size, 1)
+X_test = X_test / 255.0
+
 y_test = np.asarray([
     *np.ones([pothole_images.shape[0]], dtype=int),
     *np.zeros([plain_images.shape[0]], dtype=int),
@@ -37,8 +39,11 @@ y_test = to_categorical(y_test, num_classes=2)
 probs = model.predict(X_test, verbose=0)
 preds = np.argmax(probs, axis=1)
 y_true = np.argmax(y_test, axis=1)
+
+print("")
 for i, pred in enumerate(preds):
     print(f">>> Predicted {i} = {pred}")
 
+print("")
 accuracy = float(np.mean(preds == y_true))
 print(f"Test Accuracy: {accuracy * 100:.2f}%")

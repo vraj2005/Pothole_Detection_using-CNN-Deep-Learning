@@ -62,8 +62,7 @@ def main():
     configure_gpu_or_fail()
 
     base_dir = Path(__file__).resolve().parent
-    project_root = base_dir.parent
-    dataset_dir = project_root / "My Dataset"
+    dataset_dir = Path(__file__).resolve().parents[2] / "my_dataset"
 
     train_pothole = load_images(dataset_dir / "train" / "Pothole", SIZE)
     train_plain = load_images(dataset_dir / "train" / "Plain", SIZE)
